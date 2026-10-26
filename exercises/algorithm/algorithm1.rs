@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -69,14 +68,54 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    fn add_node(&mut self, node_ptr: NonNull<Node<T>>) {
+        unsafe {
+            (*node_ptr.as_ptr()).next = None;
         }
+        match self.end {
+            None => self.start = Some(node_ptr),
+            Some(end_ptr) => unsafe {
+                (*end_ptr.as_ptr()).next = Some(node_ptr);
+            },
+        }
+        self.end = Some(node_ptr);
+        self.length += 1;
+    }
+
+	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+	where
+        T: Ord,
+	{
+		let mut result = LinkedList::new();
+        let mut a_ptr = list_a.start;
+        let mut b_ptr = list_b.start;
+
+        unsafe {
+            while a_ptr.is_some() && b_ptr.is_some() {
+                let a_val = &(*a_ptr.unwrap().as_ptr()).val;
+                let b_val = &(*b_ptr.unwrap().as_ptr()).val;
+                if a_val <= b_val {
+                    let next = (*a_ptr.unwrap().as_ptr()).next;
+                    result.add_node(a_ptr.unwrap());
+                    a_ptr = next;
+                } else {
+                    let next = (*b_ptr.unwrap().as_ptr()).next;
+                    result.add_node(b_ptr.unwrap());
+                    b_ptr = next;
+                }
+            }
+            while let Some(ptr) = a_ptr {
+                let next = (*ptr.as_ptr()).next;
+                result.add_node(ptr);
+                a_ptr = next;
+            }
+            while let Some(ptr) = b_ptr {
+                let next = (*ptr.as_ptr()).next;
+                result.add_node(ptr);
+                b_ptr = next;
+            }
+        }
+        result
 	}
 }
 
